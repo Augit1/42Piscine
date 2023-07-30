@@ -1,123 +1,102 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_convert_base2.c                                 :+:      :+:    :+:   */
+/*   ft_convert_base.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: aude-la- <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/07/21 14:32:13 by aude-la-          #+#    #+#             */
-/*   Updated: 2023/07/22 17:52:35 by aude-la-         ###   ########.fr       */
+/*   Created: 2023/07/27 00:01:23 by aude-la-          #+#    #+#             */
+/*   Updated: 2023/07/27 12:12:56 by aude-la-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdlib.h>
 
 int		ft_strlen(char *str);
-char	*ft_strdup(char *str);
-int		base_is_valide(char *str);
-int		read_string(char *str, char *base, int nbr, int length);
+int		ft_recursive_power(int nb, int p);
+char	*ft_putnbr_base(long int nbr, char *base, int is_neg);
 
-int	get_length(int nbr, int length)
+int	base_is_valid(char *base)
 {
 	int	i;
+	int	j;
 
 	i = 0;
-	while (nbr != 0)
+	if (base[0] == '\0' || base[1] == '\0')
+		return (0);
+	while (base[i] != '\0')
 	{
+		j = i + 1;
+		while (base[j] != '\0')
+		{
+			if (base[i] == base[j] || base[j] == '+' || base[j] == '-'
+				|| base[j] == ' ' || (base[j] >= 9 && base[j] <= 13))
+				return (0);
+			j++;
+		}
 		i++;
-		nbr /= length;
 	}
-	return (i);
+	return (1);
 }
 
-void	fill_result(int nbr, char *result, char *base, int negative)
+char	*check_sign(char *str, int *is_neg)
 {
-	int	i;
-	int	length;
-
-	length = ft_strlen(base);
-	i = get_length(nbr, length);
-	result[i + negative] = '\0';
-	if (negative)
-		result[0] = '-';
-	while (i > 0)
+	*is_neg = 1;
+	while (*str == '-' || *str == '+')
 	{
-		i--;
-		result[i + negative] = base[nbr % length];
-		nbr /= length;
-	}
-}
-
-char	*ft_strrev(char *str)
-{
-	int		i;
-	int		j;
-	char	temp;
-
-	if (!str)
-		return (NULL);
-	i = 0;
-	j = ft_strlen(str) - 1;
-	while (i < j)
-	{
-		temp = str[i];
-		str[i] = str[j];
-		str[j] = temp;
-		i++;
-		j--;
+		if (*str == '-')
+			*is_neg *= -1;
+		str++;
 	}
 	return (str);
 }
 
-char	*ft_itoa_base(int nbr, char *base)
+char	*ft_atoi(char *str, char *base, int *is_neg, int *size)
 {
-	int		length;
-	char	*result;
-	int		result_length;
-	int		temp_nbr;
-	int		negative;
+	int	i;
+	int	j;
+	int	valid;
 
-	length = ft_strlen(base);
-	if (length < 2)
-		return (NULL);
-	negative = 0;
-	if (nbr == 0)
-		return (ft_strdup(base));
-	if (nbr < 0)
+	i = 0;
+	while (*str == ' ' || (*str >= 9 && *str <= 13))
+		str++;
+	str = check_sign(str, is_neg);
+	while (*str != '\0')
 	{
-		negative = 1;
-		temp_nbr = -nbr;
+		j = -1;
+		valid = 0;
+		while (base[++j] != '\0')
+			if (*str == base[j])
+				valid = 1;
+		if (valid == 0)
+			break ;
+		str++;
+		i++;
 	}
-	else
-		temp_nbr = nbr;
-	result_length = get_length(temp_nbr, length);
-	result = (char *)malloc(result_length + negative + 1);
-	if (!result)
-		return (NULL);
-	fill_result(temp_nbr, result, base, negative);
-	return (result);
+	*size = i;
+	return (str - i);
 }
 
 char	*ft_convert_base(char *nbr, char *base_from, char *base_to)
 {
-	char	*result;
-	int		nbr_dec;
+	long int	nb;
+	int			is_neg;
+	int			size;
+	int			i;
+	int			j;
 
-	if (nbr == NULL || *nbr == '\0'
-		|| !base_is_valide(base_from) || !base_is_valide(base_to))
-	{
-		result = (char *)malloc(1);
-		if (!result)
-			return (NULL);
-		*result = '\0';
-		return (result);
-	}
-	nbr_dec = read_string(nbr, base_from, 0, ft_strlen(base_from));
-	result = ft_itoa_base(nbr_dec, base_to);
-	if (!result)
-	{
-		free(result);
+	nb = 0;
+	i = 0;
+	nbr = ft_atoi(nbr, base_from, &is_neg, &size);
+	if (!base_is_valid(base_from) || !base_is_valid(base_to))
 		return (NULL);
+	while (i < size)
+	{
+		j = 0;
+		while (base_from[j] != nbr[i])
+			j++;
+		nb += j * ft_recursive_power(ft_strlen(base_from), (size - i - 1));
+		i++;
 	}
-	return (result);
+	return (ft_putnbr_base(nb, base_to, is_neg));
 }
